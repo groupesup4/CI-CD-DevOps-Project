@@ -2,9 +2,9 @@
 
 ## Secrets Management
 
-All sensitive data is handled securely using GitHub Actions secrets.
+Toutes les données sensibles sont gérées de manière sécurisée grâce aux secrets de GitHub Actions.
 
-No secrets are stored in the source code or committed to the repository.
+Aucun secret n'est stocké dans le code source ni enregistré dans le dépôt.
 
 ## Managed Secrets
 
