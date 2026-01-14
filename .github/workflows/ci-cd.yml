@@ -57,6 +57,9 @@ jobs:
           # URL pointant vers le service Postgres ci-dessus
           DATABASE_URL: "postgresql://postgres:password@localhost:5432/conduit?schema=public"
         run: |
+         cd app
+          npx prisma db push --schema=src/prisma/schema.prisma
+          cd ..
           chmod +x ./scripts/test.sh
           ./scripts/test.sh
 
