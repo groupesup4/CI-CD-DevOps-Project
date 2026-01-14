@@ -2,9 +2,9 @@ name: CI Quality Gate
 
 on:
   push:
-    branches: [ main ]
+    branches: [ dev2 ]
   pull_request:
-    branches: [ main ]
+    branches: [ dev2 ]
 
 jobs:
   quality-and-tests:
