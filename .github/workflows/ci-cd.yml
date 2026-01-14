@@ -34,6 +34,9 @@ jobs:
 
       - name: Run Unit Tests
         # le script test.sh doit être dans /scripts/test.sh à la racine
+        env:
+          # On donne une URL bidon pour satisfaire Prisma pendant les tests unitaires
+          DATABASE_URL: "postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
         run: |
           chmod +x ./scripts/test.sh
           ./scripts/test.sh
