@@ -1,0 +1,35 @@
+kversion: '3.8'
+
+services:
+  app:
+    build:
+      context: ../app
+      dockerfile: ../docker/Dockerfile
+    image: ci-cd-realworld-app:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/realworld?schema=public
+      JWT_SECRET: mon_secret_jwt_securise_local
+      NODE_ENV: development
+    depends_on:
+      - db
+    volumes:
+      - ../app:/app
+      - /app/node_modules
+      - /app/dist
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: realworld
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
