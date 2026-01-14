@@ -29,8 +29,15 @@ jobs:
         # Bloque le pipeline si le code ne respecte pas les règles ESLint [cite: 71]
         run: |
           cd app
-          npx eslint .
+          # npx eslint .
+          npm run lint
 
       - name: Run Unit Tests
         # Utilise ton script ou directement npm test [cite: 68]
         run: ./scripts/test.sh
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
