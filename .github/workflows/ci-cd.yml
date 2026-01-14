@@ -76,15 +76,6 @@ jobs:
           npm test || echo "Some tests failed"
           continue-on-error: true
 
-
-      - name: Upload Test Coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-coverage
-          path: app/coverage/
-          retention-days: 30
-
       - name: Run ESLint
         run: |
           cd app
