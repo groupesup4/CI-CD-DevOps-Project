@@ -1,0 +1,97 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ dev1 ]
+  pull_request:
+    branches: [ dev1 ]
+
+env:
+  # Image stockée sur GitHub Container Registry
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: '18'
+
+jobs:
+  # ========================================
+  # JOB 1: Tests et Qualité du Code
+  # ========================================
+  tests-and-quality:
+    name: Tests & Code Quality
+    runs-on: ubuntu-latest
+    
+    # Service PostgreSQL pour les tests
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: realworld
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd app
+          npm ci
+
+      - name: Generate Prisma Client
+        run: |
+          cd app
+          npx prisma generate
+
+      - name: Setup Database
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/realworld?schema=public
+        run: |
+          cd app
+          npx prisma db push
+
+      - name: Run Tests
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/realworld?schema=public
+          JWT_SECRET: test-secret-key-minimum-32-characters
+          NODE_ENV: test
+        run: |
+          cd app
+          npm test
+
+      - name: Upload Test Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage
+          path: app/coverage/
+          retention-days: 30
+
+      - name: Run ESLint
+        run: |
+          cd app
+          npm run lint || echo "Linting completed with warnings"
+        continue-on-error: true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
