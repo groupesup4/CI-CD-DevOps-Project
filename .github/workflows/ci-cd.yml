@@ -61,14 +61,14 @@ jobs:
 
       - name: Setup Database
         env:
-          DATABASE_URL: postgresql://realworld:realworld123@db:5432/realworld?schema=public
+          DATABASE_URL: postgresql://user:password@localhost:5432/realworld?schema=public
         run: |
           cd app
           npx prisma db push
 
       - name: Run Tests
         env:
-          DATABASE_URL: postgresql://realworld:realworld123@db:5432/realworld?schema=public
+          DATABASE_URL: postgresql://user:password@localhost:5432/realworld?schema=public
           JWT_SECRET: super_secret_ci_cd
           NODE_ENV: production
         run: |
