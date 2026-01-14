@@ -1,33 +1,23 @@
-name: CI/CD Pipeline
+name: CI Quality Gate
 
 on:
   push:
-    branches: [ dev1 ]
+    branches: [ master ]
   pull_request:
-    branches: [ dev1 ]
-
-env:
-  # Image stockée sur GitHub Container Registry
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  NODE_VERSION: '18'
+    branches: [ master ]
 
 jobs:
-  # ========================================
-  # JOB 1: Tests et Qualité du Code
-  # ========================================
-  tests-and-quality:
-    name: Tests & Code Quality
+  quality-and-tests:
     runs-on: ubuntu-latest
     
-    # Service PostgreSQL pour les tests
+    # Service de base de données pour les tests [cite: 31]
     services:
       postgres:
-        image: postgres:13
+        image: postgres:latest
         env:
-          POSTGRES_USER: user
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: realworld
+          POSTGRES_DB: conduit
         ports:
           - 5432:5432
         options: >-
@@ -35,56 +25,48 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # Requis pour SonarCloud
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: '18'
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
 
       - name: Install dependencies
         run: |
           cd app
-          npm ci
+          npm install
 
-      - name: Generate Prisma Client
+      - name: Code Quality (Lint)
+        # Analyse ESLint 
         run: |
           cd app
-          npx prisma generate
-
-      - name: Setup Database
-        env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/realworld?schema=public
-        run: |
-          cd app
-          npx prisma db push
-
-      - name: Run Tests
-        env:
-          DATABASE_URL: postgresql://user:password@localhost:5432/realworld?schema=public
-          JWT_SECRET: super_secret_ci_cd
-          NODE_ENV: production
-        run: |
-          cd app
-          npm test || echo "Some tests failed"
+          npm run lint || echo "Linting failed but continuing for educational purposes"
         continue-on-error: true
 
-      - name: Run ESLint
+      - name: Run Unit Tests
+        # Exécution du script de test automatisé [cite: 49, 66]
+        env:
+          # URL pointant vers le service Postgres ci-dessus
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/conduit?schema=public"
         run: |
-          cd app
-          npm run lint || echo "Linting completed with warnings"
-        continue-on-error: true
+         cd app
+          npx prisma db push --schema=src/prisma/schema.prisma
+          cd ..
+          chmod +x ./scripts/test.sh
+          ./scripts/test.sh
+        continue-on-error: true # <--- C'est cette ligne laisser le pipeline continuer meme avec des erreurs
 
       - name: SonarCloud Scan
+        # Intégration de la qualité SonarCloud [cite: 71, 21]
         uses: SonarSource/sonarcloud-github-action@master
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
