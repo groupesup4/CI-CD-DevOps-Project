@@ -9,9 +9,28 @@ on:
 jobs:
   quality-and-tests:
     runs-on: ubuntu-latest
+    
+    # Service de base de données pour les tests [cite: 31]
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: conduit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Requis pour SonarCloud
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,23 +45,24 @@ jobs:
           npm install
 
       - name: Code Quality (Lint)
-        # Bloque le pipeline si le code ne respecte pas les règles ESLint [cite: 71]
+        # Analyse ESLint 
         run: |
           cd app
           npm run lint || echo "Linting failed but continuing for educational purposes"
-        continue-on-error: true # Permet au pipeline de passer au vert même s'il y a des erreurs
+        continue-on-error: true
 
       - name: Run Unit Tests
-        # le script test.sh doit être dans /scripts/test.sh à la racine
+        # Exécution du script de test automatisé [cite: 49, 66]
         env:
-          # On donne une URL bidon pour satisfaire Prisma pendant les tests unitaires
-          DATABASE_URL: "postgresql://johndoe:randompassword@localhost:5432/mydb?schema=public"
+          # URL pointant vers le service Postgres ci-dessus
+          DATABASE_URL: "postgresql://postgres:password@localhost:5432/conduit?schema=public"
         run: |
           chmod +x ./scripts/test.sh
           ./scripts/test.sh
 
       - name: SonarCloud Scan
+        # Intégration de la qualité SonarCloud [cite: 71, 21]
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # Généré automatiquement par GitHub
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}     # Génere par nous, dans SonarQube cloud
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
