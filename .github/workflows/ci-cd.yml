@@ -74,7 +74,7 @@ jobs:
         run: |
           cd app
           npm test || echo "Some tests failed"
-          continue-on-error: true
+        continue-on-error: true
 
       - name: Run ESLint
         run: |
