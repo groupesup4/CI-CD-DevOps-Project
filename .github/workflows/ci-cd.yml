@@ -100,12 +100,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Login to Azure using Publish Profile
-        uses: azure/login@v2
+      # 1. On déploie l'image Docker directement avec le profil de publication (XML)
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
         with:
-          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          allow-no-subscriptions: true
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: 'ghcr.io/${{ github.repository_owner }}/api-nodejs:latest'
 
+      # 2. On lance ton script deploy.sh pour valider la logique Étudiant C
+      # Note : On ne peut pas utiliser 'az cli' ici sans login, 
+      # donc on s'en sert pour du logging ou des vérifications.
       - name: Run Deploy Script
         run: |
           chmod +x ./scripts/deploy.sh
