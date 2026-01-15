@@ -48,6 +48,7 @@ jobs:
           npm run lint || echo "Linting failed but continuing for educational purposes"
         continue-on-error: true
 
+
       - name: Run Unit Tests
         env:
           DATABASE_URL: "postgresql://postgres:${{ secrets.DB_PASSWORD }}@localhost:5432/conduit?schema=public"
