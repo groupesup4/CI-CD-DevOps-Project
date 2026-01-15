@@ -1,5 +1,4 @@
 #!/bin/bash
-# Étudiant C - Validation du déploiement
 
 echo "--------------------------------------------------------"
 echo " Rapport de déploiement pour : $AZURE_WEBAPP_NAME"
