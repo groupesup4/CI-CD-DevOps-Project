@@ -244,7 +244,7 @@ services:
 volumes:
   db_data:
 
-⚠️ Les secrets présents ici sont uniquement destinés à un usage local.
+ Les secrets présents ici sont uniquement destinés à un usage local.
 En CI/CD et en production, ils sont remplacés par des GitHub Secrets.
 
 ## 3.4 Pipeline de Build – GitHub Actions
