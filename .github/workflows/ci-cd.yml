@@ -109,7 +109,7 @@ jobs:
           docker push $IMAGE_NAME:${{ github.sha }}
 
           
- # JOB 3 : CD - Déploiement Azure (Étudiant C)
+ # JOB 3 : CD - Déploiement Azure
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
