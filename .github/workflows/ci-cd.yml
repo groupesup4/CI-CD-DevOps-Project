@@ -88,17 +88,20 @@ jobs:
 
       - name: Push Image to GHCR
         run: |
-          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/api-nodeJS"
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/api-nodejs"
           docker push $IMAGE_NAME:latest
           docker push $IMAGE_NAME:${{ github.sha }}
 
-  # JOB 3 : CD - Déploiement Azure (Étudiant C)
+ # JOB 3 : CD - Déploiement Azure (Étudiant C)
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2 # v2 est plus stable
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -109,3 +112,5 @@ jobs:
         env:
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # Ajoute ce secret sur GitHub
