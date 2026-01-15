@@ -100,23 +100,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. On déploie l'image Docker directement avec le profil de publication (XML)
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          # On ajoute les infos du registre directement ici
           images: 'ghcr.io/${{ github.repository_owner }}/api-nodejs:latest'
-
-      # 2. On lance ton script deploy.sh pour valider la logique Étudiant C
-      # Note : On ne peut pas utiliser 'az cli' ici sans login, 
-      # donc on s'en sert pour du logging ou des vérifications.
+          
       - name: Run Deploy Script
         run: |
           chmod +x ./scripts/deploy.sh
           ./scripts/deploy.sh
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
