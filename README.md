@@ -379,12 +379,6 @@ Le diagramme ci-dessous illustre l’architecture de notre pipeline :
 Toutes les informations sensibles sont gérées via les secrets GitHub Actions.
 Aucun mot de passe ou clé n’est stocké dans le code source.
 
-Secret	Description
-DOCKER_USERNAME	Nom d’utilisateur pour le registre Docker
-DOCKER_PASSWORD	Mot de passe / token du registre Docker
-DB_PASSWORD	Mot de passe de la base de données MongoDB
-SONAR_TOKEN	Token pour SonarCloud (analyse qualité)
-
 Les secrets sont injectés au runtime et le principe du moindre privilège est appliqué.
 
 Voir le fichier SECURITY.md
