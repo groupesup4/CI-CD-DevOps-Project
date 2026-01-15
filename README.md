@@ -247,7 +247,68 @@ volumes:
  Les secrets présents ici sont uniquement destinés à un usage local.
 En CI/CD et en production, ils sont remplacés par des GitHub Secrets.
 
-## 3.4 Pipeline de Build – GitHub Actions
+# Étape SecOps – Analyse de vulnérabilités avec Trivy
+Afin de renforcer la sécurité du pipeline CI/CD, une étape SecOps a été intégrée pour analyser automatiquement les vulnérabilités de l’image Docker générée.
+
+Cette analyse est réalisée à l’aide de Trivy, un scanner de sécurité open-source spécialisé dans la détection de failles connues (CVE) au sein des images Docker.
+
+## 3.4 Objectifs de l’analyse Trivy
+Cette étape permet de :
+
+Identifier les vulnérabilités CRITICAL et HIGH
+
+Analyser les dépendances système et applicatives de l’image Docker
+
+Produire un rapport exploitable pour l’audit sécurité
+
+Intégrer la sécurité directement dans la chaîne CI/CD (Shift Left Security)
+
+## 3.5 Intégration dans le pipeline GitHub Actions
+L’analyse de sécurité est exécutée après la construction de l’image Docker et avant son déploiement, afin de garantir que seule une image analysée est publiée.
+
+Étapes réalisées :
+
+Scan de l’image Docker avec Trivy
+
+Génération d’un rapport de vulnérabilités au format SARIF
+
+Stockage du rapport en tant qu’artefact du pipeline
+
+Publication de l’image Docker vers le registre GHCR
+
+## 3.6 Extrait du pipeline CI/CD – Trivy
+# --- ÉTAPE SEC-OPS : SCAN TRIVY ---
+- name: Run Trivy vulnerability scanner
+  uses: aquasecurity/trivy-action@master
+  with:
+    image-ref: 'ghcr.io/${{ github.repository_owner }}/api-nodejs:latest'
+    format: 'sarif'
+    output: 'trivy-results.sarif'
+    severity: 'CRITICAL,HIGH'
+
+# --- ÉTAPE SEC-OPS : GÉNÉRATION DU RAPPORT ---
+- name: Upload Trivy scan results as artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: vulnerability-report
+    path: trivy-results.sarif
+  
+## 3.7 Rapport de vulnérabilités
+Le rapport généré (trivy-results.sarif) est :
+
+téléchargeable depuis l’onglet Artifacts du workflow GitHub Actions
+
+exploitable pour une analyse manuelle ou automatisée
+
+Le format SARIF est compatible avec :
+
+GitHub Security
+
+Outils d’analyse de sécurité
+
+Revues d’audit DevSecOps
+
+## 3.8 Pipeline de Build – GitHub Actions
 
 Le membre 2 a également implémenté la phase Build & Artifacts du pipeline CI/CD.
 
@@ -259,7 +320,7 @@ Versionner l’image
 
 Publier l’image dans un registre distant
 
-## 3.5 Gestion des tags Docker
+## 3.9 Gestion des tags Docker
 
 Chaque image est automatiquement taguée avec :
 
@@ -273,7 +334,7 @@ un rollback facile
 
 une identification précise des versions déployées
 
-## 3.6 Push vers le registre (GitHub Container Registry)
+## 3.10 Push vers le registre (GitHub Container Registry)
 
 Les images Docker sont poussées vers GitHub Container Registry (GHCR).
 
@@ -308,7 +369,7 @@ build-and-push:
         docker push ghcr.io/${{ github.repository_owner }}/api-nodejs:latest
         docker push ghcr.io/${{ github.repository_owner }}/api-nodejs:${{ github.sha }}
 
-## 3.7 Script de build Docker
+## 3.11 Script de build Docker
 
 Le build est encapsulé dans un script pour :
 
