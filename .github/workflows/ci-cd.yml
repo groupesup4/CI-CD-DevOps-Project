@@ -123,23 +123,23 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
-      - name: Delete old container (if exists)
+      - name: Delete old container
         run: |
           az container delete \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name api-conduit \
-            --yes || echo "No existing container to delete"
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name api-nodejs \
+            --yes || echo "No existing container"
       
       - name: Deploy to Azure Container Instances
         run: |
           az container create \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name api-conduit \
-            --image ghcr.io/${{ github.repository_owner }}/api-conduit:${{ github.sha }} \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name api-nodejs \
+            --image ghcr.io/${{ github.repository_owner }}/api-nodejs:${{ github.sha }} \
             --registry-login-server ghcr.io \
             --registry-username ${{ github.actor }} \
-            --registry-password ${{ secrets.GITHUB_TOKEN }} \
-            --dns-name-label api-conduit-${{ github.run_number }} \
+            --registry-password "${{ secrets.GITHUB_TOKEN }}" \
+            --dns-name-label api-nodejs-${{ github.run_number }} \
             --location westeurope \
             --cpu 1 \
             --memory 1.5 \
@@ -148,36 +148,36 @@ jobs:
               NODE_ENV=production \
               PORT=3000 \
             --secure-environment-variables \
-              DATABASE_URL=${{ secrets.DATABASE_URL }} \
-              JWT_SECRET=${{ secrets.JWT_SECRET }}
+              DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              JWT_SECRET="${{ secrets.JWT_SECRET }}"
       
       - name: Get Application URL
         run: |
           FQDN=$(az container show \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name api-conduit \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name api-nodejs \
             --query ipAddress.fqdn \
             --output tsv)
           
-          echo "### Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Successful" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Application URL:** http://${FQDN}:3000" >> $GITHUB_STEP_SUMMARY
           echo "**API Health:** http://${FQDN}:3000/api/tags" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Container:** api-conduit" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ghcr.io/${{ github.repository_owner }}/api-conduit:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Container:** api-nodejs" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ghcr.io/${{ github.repository_owner }}/api-nodejs:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
       
-      - name: Wait and Health Check
+      - name: Health Check
         run: |
           echo "Waiting 30 seconds for container startup..."
           sleep 30
           
           FQDN=$(az container show \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --name api-conduit \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name api-nodejs \
             --query ipAddress.fqdn \
             --output tsv)
           
           echo "Testing API at http://${FQDN}:3000/api/tags"
-          curl -f http://${FQDN}:3000/api/tags || echo "Health check failed - container may still be starting"
+          curl -f "http://${FQDN}:3000/api/tags" || echo "Health check warning"
 
