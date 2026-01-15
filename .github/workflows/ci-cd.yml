@@ -65,7 +65,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # JOB 2 : Build & Artifacts (Étudiant B)
+  # JOB 2 : Build & Artifacts
   build-and-push:
     needs: quality-and-tests
     runs-on: ubuntu-latest
