@@ -496,7 +496,7 @@ docker-compose up -d --build
 
 Vérifier que l’application fonctionne :
 
-URL par défaut : http://localhost:3000/api
+URL par défaut : [http://localhost:3000/api](https://app-conduit-group4-2097863895.azurewebsites.net/)
 
 ## 4.6 Scripts disponibles
 Script	Description
