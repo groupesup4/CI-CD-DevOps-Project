@@ -1,4 +1,4 @@
-name: CI Quality Gate
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,10 +7,9 @@ on:
     branches: [ master ]
 
 jobs:
+  # JOB 1 : CI - Qualité et Tests ( Étudiant A )
   quality-and-tests:
     runs-on: ubuntu-latest
-    
-    # Service de base de données pour les tests [cite: 31]
     services:
       postgres:
         image: postgres:latest
@@ -25,12 +24,11 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Requis pour SonarCloud
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -45,28 +43,74 @@ jobs:
           npm install
 
       - name: Code Quality (Lint)
-        # Analyse ESLint 
         run: |
           cd app
           npm run lint || echo "Linting failed but continuing for educational purposes"
         continue-on-error: true
 
       - name: Run Unit Tests
-        # Exécution du script de test automatisé [cite: 49, 66]
         env:
-          # URL pointant vers le service Postgres ci-dessus
           DATABASE_URL: "postgresql://postgres:password@localhost:5432/conduit?schema=public"
         run: |
-         cd app
+          cd app
           npx prisma db push --schema=src/prisma/schema.prisma
           cd ..
           chmod +x ./scripts/test.sh
           ./scripts/test.sh
-        continue-on-error: true # <--- C'est cette ligne laisser le pipeline continuer meme avec des erreurs
+        continue-on-error: true 
 
       - name: SonarCloud Scan
-        # Intégration de la qualité SonarCloud [cite: 71, 21]
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # JOB 2 : Build & Artifacts (Étudiant B)
+  build-and-push:
+    needs: quality-and-tests
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Image using script
+        run: |
+          chmod +x ./scripts/build.sh
+          ./scripts/build.sh
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+
+      - name: Push Image to GHCR
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/api-nodejs"
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:${{ github.sha }}
+
+ # JOB 3 : CD - Déploiement Azure (Étudiant C)
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          # On ajoute les infos du registre directement ici
+          images: 'ghcr.io/${{ github.repository_owner }}/api-nodejs:latest'
+          
+      - name: Run Deploy Script
+        run: |
+          chmod +x ./scripts/deploy.sh
+          ./scripts/deploy.sh
+        env:
+          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
