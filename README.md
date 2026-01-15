@@ -277,7 +277,7 @@ Stockage du rapport en tant qu’artefact du pipeline
 Publication de l’image Docker vers le registre GHCR
 
 ## 3.6 Extrait du pipeline CI/CD – Trivy
-# --- ÉTAPE SEC-OPS : SCAN TRIVY ---
+## --- ÉTAPE SEC-OPS : SCAN TRIVY ---
 - name: Run Trivy vulnerability scanner
   uses: aquasecurity/trivy-action@master
   with:
@@ -286,7 +286,7 @@ Publication de l’image Docker vers le registre GHCR
     output: 'trivy-results.sarif'
     severity: 'CRITICAL,HIGH'
 
-# --- ÉTAPE SEC-OPS : GÉNÉRATION DU RAPPORT ---
+## --- ÉTAPE SEC-OPS : GÉNÉRATION DU RAPPORT ---
 - name: Upload Trivy scan results as artifact
   uses: actions/upload-artifact@v4
   with:
